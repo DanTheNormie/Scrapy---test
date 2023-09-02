@@ -18,8 +18,6 @@ const taskRunner = require('./scrape_scripts/scraping_script')
 
 /* Database config */
 const mongoose = require('mongoose')
-const { start } = require('repl')
-const { log } = require('console')
 
 let cluster;
 
@@ -89,7 +87,7 @@ async function startServer(){
             concurrency: Cluster.CONCURRENCY_PAGE,
             maxConcurrency: 5,
             puppeteerOptions: {
-                headless: false
+                headless: "new"
             },
             puppeteer:puppeteer,
         })
