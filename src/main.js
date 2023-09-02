@@ -3,8 +3,8 @@ const express = require('express')
 const cors = require('cors')
 const path = require('path')
 const app = express()
+const axios = require('axios')
 const PORT = process.env.PORT || 3000
-
 
 /* puppeteer config */
 const { Cluster } = require('puppeteer-cluster')
@@ -21,7 +21,6 @@ const mongoose = require('mongoose')
 
 let cluster;
 
-
 async function attachPuppeteer(req, res, next) {
     if (!req.puppeteer) {
         req.puppeteer = { cluster }
@@ -35,13 +34,12 @@ app.use(cors())
 app.use(attachPuppeteer)
 
 async function customScrape(req, res){
-    console.log(req.body);
     const {task} = req.body
     const {cluster} = req.puppeteer
 
     try{
         return await cluster.execute(task, async ({page, data})=>{
-            page.setRequestInterception(true)
+           /*  page.setRequestInterception(true)
             
             page.on ( 'request', async request => {
                 if ( request.resourceType () === 'stylesheet' || request.resourceType () === 'image' || request.resourceType () === 'media' || request.resourceType () === 'font' ) {
@@ -49,22 +47,44 @@ async function customScrape(req, res){
                 } else {
                     request.continue ()
                 }
-            })
-            const torrents_data_array = await taskRunner(page, data)
-            console.log(torrents_data_array.length);
+            }) */
 
-            if(torrents_data_array[0].title === 'No results returned'){
-                return res.status(404).json({
-                    success:false,
-                    message:"No Data found for given Keyword"
+            try{
+                const torrents_data_array = await taskRunner(page, data)
+                console.log(torrents_data_array.length);
+
+                if(torrents_data_array[0].title === 'No results returned'){
+                    return res.status(404).json({
+                        success:false,
+                        message:"No Data found for given Keyword"
+                    })
+                }
+
+                return res.json({
+                    success:true,
+                    data:torrents_data_array,
+                    message:'Data Fetched Successfully'
                 })
+
+            }catch(err){
+                let image;
+                try{
+                    image = await page.screenshot({encoding:'base64', fullPage:true})
+                }
+                catch(err){
+                    console.log(err);
+                    throw new Error("failed to upload screenshot")
+                }
+                    
+                    let res = await axios.post(
+                        'https://api.imgbb.com/1/upload?key=48e10968d05dbb32dcc2f896ddc452c0&expiration=120',
+                        {image:image},{
+                            headers:{
+                                'Content-Type': 'multipart/form-data',
+                            }
+                        })
+                    throw new Error(`Screenshot uploaded to ${res.data.data.url}`,{cause : err.message})
             }
-        
-            return res.json({
-                success:true,
-                data:torrents_data_array,
-                message:'Data Fetched Successfully'
-            })
         })
 
     }catch(err){
@@ -78,7 +98,6 @@ async function customScrape(req, res){
 
 app.post('/', customScrape);
 
-
 async function startServer(){
     
     const startPuppeteer = (async () => {
@@ -87,7 +106,7 @@ async function startServer(){
             concurrency: Cluster.CONCURRENCY_PAGE,
             maxConcurrency: 1,
             puppeteerOptions: {
-                headless: "new"
+                headless: 'new'
             },
             puppeteer:puppeteer,
         })
