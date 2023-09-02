@@ -69,6 +69,7 @@ async function customScrape(req, res){
             }catch(err){
                 let image;
                 try{
+                    console.log('trying to take screenshot...');
                     image = await page.screenshot({encoding:'base64', fullPage:true})
                 }
                 catch(err){
