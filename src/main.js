@@ -109,6 +109,7 @@ async function startServer(){
             puppeteerOptions: {
                 headless: 'new'
             },
+            timeout:1200000,
             puppeteer:puppeteer,
         })
         cluster.on('taskerror', (err, data, willRetry) => {
