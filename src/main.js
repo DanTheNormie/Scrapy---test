@@ -105,7 +105,7 @@ async function startServer(){
         console.log('Starting puppeteer browser...');
         cluster = await Cluster.launch({
             concurrency: Cluster.CONCURRENCY_PAGE,
-            maxConcurrency: 1,
+            maxConcurrency: 5,
             puppeteerOptions: {
                 headless: 'new'
             },
