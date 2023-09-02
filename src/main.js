@@ -109,6 +109,7 @@ async function startServer(){
             puppeteerOptions: {
                 headless: 'new'
             },
+            monitor:true,
             timeout:1200000,
             puppeteer:puppeteer,
         })
