@@ -133,17 +133,17 @@ async function scrape(task, page){
         if(task.result.format === 'array'){
                 if(task.result.waitForSelector){
                     try{
-                        await page.waitForSelector(task.result.waitForSelector,{timeout:3000})  
+                        await page.waitForSelector(task.result.waitForSelector,{timeout:30000})  
                     }catch(err){
                         console.log("Page didn't load properly");
                         throw new Error('Page didn\'t load properly')
                     }  
                 }else{
                     try{
-                        await page.waitForSelector(task.result.parentElementSelector,{timeout:3000})
+                        await page.waitForSelector(task.result.parentElementSelector,{timeout:30000})
                     }catch(err){
-                        console.log("parentElementSelector Not Found even after 3sec");
-                        throw new Error("parentElementSelector Not Found even after 3sec")
+                        console.log("parentElementSelector Not Found even after 30sec");
+                        throw new Error("parentElementSelector Not Found even after 30sec")
                     }
                 }
             
@@ -152,17 +152,17 @@ async function scrape(task, page){
             
                 if(task.result.waitForSelector){
                     try{
-                        await page.waitForSelector(task.result.waitForSelector,{timeout:3000})  
+                        await page.waitForSelector(task.result.waitForSelector,{timeout:30000})  
                     }catch(err){
                         console.log("Page didn't load properly");
                         throw new Error('Page didn\'t load properly')
                     }
                 }else{
                     try{
-                        await page.waitForSelector(task.selectors[0].selector,{timeout:3000})
+                        await page.waitForSelector(task.selectors[0].selector,{timeout:30000})
                     }catch(err){
-                        console.log("first selector in selectors array Not Found even after 3sec");
-                        throw new Error("first selector in selectors array Not Found even after 3sec")
+                        console.log("first selector in selectors array Not Found even after 30sec");
+                        throw new Error("first selector in selectors array Not Found even after 30sec")
                     }
                 }
             
