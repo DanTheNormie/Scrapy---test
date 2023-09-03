@@ -1,29 +1,29 @@
 /* server config */
 const express = require('express')
 const cors = require('cors')
-const path = require('path')
+//const path = require('path')
 const app = express()
-const axios = require('axios')
+//const axios = require('axios')
 const PORT = process.env.PORT || 3000
 
 /* puppeteer config */
-const { Cluster } = require('puppeteer-cluster')
+//const { Cluster } = require('puppeteer-cluster')
 const puppeteer = require('puppeteer-extra')
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
-const useProxy = require('puppeteer-page-proxy');
+//const useProxy = require('puppeteer-page-proxy');
 puppeteer.use(StealthPlugin())
 
 /* scrape script */
 const taskRunner = require('./scrape_scripts/scraping_script')
 
 /* Database config */
-const mongoose = require('mongoose')
+//const mongoose = require('mongoose')
 
 let cluster;
 
 async function attachPuppeteer(req, res, next) {
     if (!req.puppeteer) {
-        req.puppeteer = { cluster }
+        req.puppeteer = { cluster, puppeteer}
     }
     next()
 }
@@ -33,36 +33,28 @@ app.use(express.urlencoded({ extended: false }))
 app.use(cors())
 app.use(attachPuppeteer)
 
-async function customScrape(req, res){
+/* async function customScrape(req, res){
     const {task} = req.body
     const {cluster} = req.puppeteer
 
     try{
         return await cluster.execute(task, async ({page, data})=>{
-           /*  page.setRequestInterception(true)
+            page.setRequestInterception(true)
             
             page.on ( 'request', async request => {
-                if ( request.resourceType () === 'stylesheet' || request.resourceType () === 'image' || request.resourceType () === 'media' || request.resourceType () === 'font' ) {
+                if ( request.resourceType() === 'stylesheet' || request.resourceType() === 'image' || request.resourceType() === 'media' || request.resourceType() === 'font' ) {
                     request.abort ()
                 } else {
                     request.continue ()
                 }
-            }) */
+            })
 
             try{
-                const torrents_data_array = await taskRunner(page, data)
-                console.log(torrents_data_array.length);
-
-                if(torrents_data_array[0].title === 'No results returned'){
-                    return res.status(404).json({
-                        success:false,
-                        message:"No Data found for given Keyword"
-                    })
-                }
+                const torrents_data = await taskRunner(page, data)
 
                 return res.json({
                     success:true,
-                    data:torrents_data_array,
+                    data:torrents_data,
                     message:'Data Fetched Successfully'
                 })
 
@@ -78,7 +70,7 @@ async function customScrape(req, res){
                 }
                     
                     let res = await axios.post(
-                        'https://api.imgbb.com/1/upload?key=48e10968d05dbb32dcc2f896ddc452c0&expiration=120',
+                        'https://api.imgbb.com/1/upload?key=48e10968d05dbb32dcc2f896ddc452c0&expiration=600',
                         {image:image},{
                             headers:{
                                 'Content-Type': 'multipart/form-data',
@@ -95,14 +87,59 @@ async function customScrape(req, res){
             error:err.message
         })
     }
+} */
+
+async function customCloudScrape(req, res){
+    console.time('TaskTime')
+    const {puppeteer} = req.puppeteer
+    const {task} = req.body
+    try{
+        console.timeLog('TaskTime', 'connecting to browser...')
+        const browser = await puppeteer.connect({
+            browserWSEndpoint: `wss://chrome.browserless.io/?token=b45d2727-b9f3-4245-b628-309a6e0400b2`
+        })
+        console.timeLog('TaskTime', 'connected to browser')
+        console.timeLog('TaskTime', 'creating a new page...')
+        const page = await browser.newPage()
+        console.timeLog('TaskTime', 'created a new page')
+        console.timeLog('TaskTime', 'starting the task...')
+        const data = await taskRunner(page, task)
+        console.timeLog('TaskTime', 'completed the task')
+        browser.close()
+        if(typeof data.success !== 'undefined' && data.success === false){
+            return res.status(400).json({
+                success:data.success,
+                message:data.message
+            })
+        }
+        console.
+        return res.json({
+            success:true,
+            data:data,
+            message:"Data fetched successfully",
+        })
+    }catch(err){
+        browser.close()
+        return res.json({
+            success:false,
+            message:"Request Failed (or) No result for given data",
+            error:err.message
+        })
+    }finally{
+        console.timeEnd('TaskTime')
+    }
+
 }
 
-app.post('/', customScrape);
+//app.post('/', customScrape);
+
+app.post('/', customCloudScrape)
 
 async function startServer(){
-    
+/*     
     const startPuppeteer = (async () => {
         console.log('Starting puppeteer browser...');
+
         cluster = await Cluster.launch({
             concurrency: Cluster.CONCURRENCY_PAGE,
             maxConcurrency: 10,
@@ -133,12 +170,12 @@ async function startServer(){
     })()
 
     try{
-        await Promise.all([startPuppeteer, connectDB])
+        await Promise.all([startPuppeteer , connectDB ])
     }catch(err){
         console.log(err);
     }
     
-
+ */
     app.listen(PORT,()=>{console.log(`server running at port ${PORT}`);})
 }
 
