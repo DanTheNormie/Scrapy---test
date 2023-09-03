@@ -112,7 +112,6 @@ async function customCloudScrape(req, res){
                 message:data.message
             })
         }
-        console.
         return res.json({
             success:true,
             data:data,
